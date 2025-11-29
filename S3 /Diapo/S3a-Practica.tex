@@ -1,0 +1,1094 @@
+\documentclass[8pt]{beamer}
+
+\usepackage{amsmath}
+%\usetheme[progressbar]{CambridgeUS}
+%\usecolortheme{beaver}
+\usepackage{mathpazo}
+%\usecolortheme{spruce} % Beamer color theme
+%\setbeamercovered{transparent}
+\usepackage{tikz}
+%\setbeamertemplate{background}{\begin{tikzpicture} \includegraphics[width=\paperwidth,height=\paperheight]{../Imagen/usmp}
+%\end{tikzpicture}
+%}
+
+\setbeamertemplate{background}{
+\begin{tikzpicture}
+\ifnum\thepage>1\relax%
+% background for pages > 1 
+	\fill[white,opacity=1] (0,0) rectangle(\the\paperwidth,\the\paperheight);
+\else 
+  % background for the title page
+  \useasboundingbox (0,0) rectangle(\the\paperwidth,\the\paperheight );
+  
+
+  % background image
+  \node[inner sep=0.5pt] (logo) at (.5\paperwidth,0.5\paperheight){\includegraphics[width=\paperwidth]{../Imagen/usmp}};
+
+  % logo
+%  \node[inner sep=0pt] (logo) at (\paperwidth-1.7cm,\paperheight-2cm){\includegraphics[width=1.6cm]{../Imagen/usmp2.png}};
+
+  % line between institute and author
+    %\fill[color=white] (0,7.1) rectangle(\the\paperwidth,7.15);  
+
+\fi
+\ifdefined\DEBUG
+	\draw[help lines,xstep=1,ystep=1,gray] (current page.south west) grid (current page.north east);
+\fi
+\end{tikzpicture}
+}
+
+
+\usepackage{textpos} 
+
+\addtobeamertemplate{frametitle}{}{%
+    \begin{textblock*}{100mm}(.85\textwidth,-0.5cm)
+        \includegraphics[height=0.5cm,width=0.8cm]{../Imagen/uni.jpg}
+    \end{textblock*}}
+    
+\usepackage[spanish]{babel}
+\usepackage[latin1]{inputenc}
+\usepackage{threeparttable}
+\spanishdecimal{.}
+\usepackage{latexsym,amsmath,amssymb} % S\'imbolos
+\newtheorem{Teorema}{Teorema}
+\newtheorem{Ejemplo}{Ejemplo}
+\newtheorem{Definicion}{Definición}
+\newtheorem{Corolario}{Corolario}
+\newtheorem{Prueba}{Prueba}
+\usepackage[pdftex]{graphicx}	% Inclusión de imágenes
+\DeclareGraphicsExtensions{.pdf,.png,.jpg}
+\usepackage{graphicx}		% Inclusión de imágenes
+\usepackage[framed,numbered]{mcode}
+\usepackage{booktabs}
+
+\usepackage{textpos} 
+\usepackage{stata}
+
+
+\setbeamertemplate{title page}[default][center]
+
+\begin{document}
+
+
+\title[Microeconometr\'{i}a II]{\textcolor{black}{Microeconometria II\\  Pr\'{a}ctica 3A \\ Modelos de Duraci\'{o}n} \\}
+\author[Edinson Tolentino]{\textcolor{black}{Edinson Tolentino \\ \tiny email: edinson.tolentino@gmail.com \\ \tiny Twitter:  @edutoleraymondi}} \\
+\institute[CFC]{\small \textcolor{black}{Centro de Formaci\'{o}n Continua}}\\
+
+\date{\textcolor{black}{\today}}
+
+
+
+\frame{\titlepage} 
+
+\frame{\frametitle{Contenido}\tableofcontents} 
+
+\section{	Introducción}
+
+\frame{\frametitle{Introducción}
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics [height=7cm,width=10cm]{../Imagen/t1.png}
+\end{center}
+\end{figure}
+
+}
+
+
+\frame{\frametitle{Introducción}
+
+
+\begin{itemize}
+%\pause
+\item Los hombres africamericanos posee altas tasas de encarcelación respecto a los demas grupos en Estados Unidos.
+
+%\pause
+% \item Los hombres blancos respecto a los hombres blancos, poseen tasas de encarcelacion las cuales son:
+
+% \begin{itemize}	
+% \item Cuatro veces mas alta para crimenes de probreza
+% \item Seis veces mas alta para crimenes de violencia
+% \item Nueve veces mas alta para hechos de drogas
+% \end{itemize}	
+
+%\pause
+\item La tasa de \textbf{reincidencia (recidivism)} es de 50 \% en los Estados Unidos y son mas altas entre los afroamericanos 
+
+%\pause
+\item El presente taller explora los determinantes de  \textbf{recidivism (reincidencia)} (desde el punto de vista de un ex-convicto liberado de su sistema de prision)
+
+\end{itemize}	
+}
+
+\frame{\frametitle{Introducción}
+
+\begin{itemize}
+ 
+\item Dada la informaci\'{o}n de la data \textbf{BD4.dta} contiene 1,145 presidarios del sistema de prision de Estados Unidos. 
+
+\item  La propuesta del ejercicio es investigar los factores que determinan el tiempo de reincidir en un delito ( tiempo de falla, failure time) luego de ser liberado. Esto es conocido en la literatura criminología como \textbf{reincidencia}. 
+
+\fontsize{6}{8}\selectfont
+\begin{center}
+\begin{tabular}{ll}
+\hline\noalign{\smallskip}
+Variables & Descripci\'{o}n   \\
+\noalign{\smallskip}\hline\noalign{\smallskip}
+$durat_{i}$ & número de meses dada la libertad del exconvicto del sistema de prisión \\
+$d_{i}$ & $==1$ , si el exconvicto fue arrestrado, $=0$ otro caso\\
+$age_{i}$ & edad del exconvicto en meses \\
+$married_{i}$ & $==1$ si el exconvicto se encuentra casado, $=0$, otro caso \\
+$black_{i}$ & $==1$, si el exconvicto es negro, $=0$ otro caso \\
+$drugs$ & $==1$, si el exconvicto tiene historial de drogas, $=0$ otro caso \\
+$alcohol_{i}$ & $==1$, si el exconvicto tiene historial de alcohol, $=0$ otro caso \\
+$priors_{i}$ & numero de condenas previas del exconvicto  \\
+$rules_{i}$ & numero de reglas violadas durante su periodo en prision \\
+$tserved_{i}$ & tiempo de servicio en prision (en meses) antes de su liberacion \\
+\noalign{\smallskip}\hline
+\end{tabular}
+\end{center}
+
+% \begin{figure}[h]
+% \begin{center}
+% \includegraphics [height=5cm,width=8cm]{../Imagen/e1.png}
+% \end{center}
+% \end{figure}
+
+\item Un investigador busca analizar el tamaño del tiempo ( o duración) meses hasta que la policía vuelva a arrestar a un ex preso por un delito (o delitos).
+
+\end{itemize}	
+}
+
+
+\frame{\frametitle{Introducción}
+
+\begin{itemize}
+\item La propuesta del ejericio es investigar los \textbf{factores} que determina el tiempo de re-encarcelación (failure time)
+
+\item Hubo 552 liberados que fueron arrestados nuevamente por reincidir (38 \% de liberados).
+
+% \begin{figure}[h]
+% \begin{center}
+% \includegraphics [height=5cm,width=8cm]{../Imagen/e1.png}
+% \end{center}
+% \end{figure}
+
+
+\fontsize{6}{8}\selectfont
+\begin{center}
+\begin{tabular}{ll}
+\hline\noalign{\smallskip}
+Variables & Descripci\'{o}n   \\
+\noalign{\smallskip}\hline\noalign{\smallskip}
+$durat_{i}$ & número de meses dada la libertad del exconvicto del sistema de prisión \\
+$d_{i}$ & $==1$ , si el exconvicto fue arrestrado, $=0$ otro caso\\
+$age_{i}$ & edad del exconvicto en meses \\
+$married_{i}$ & $==1$ si el exconvicto se encuentra casado, $=0$, otro caso \\
+$black_{i}$ & $==1$, si el exconvicto es negro, $=0$ otro caso \\
+$drugs$ & $==1$, si el exconvicto tiene historial de drogas, $=0$ otro caso \\
+$alcohol_{i}$ & $==1$, si el exconvicto tiene historial de alcohol, $=0$ otro caso \\
+$priors_{i}$ & numero de condenas previas del exconvicto  \\
+$rules_{i}$ & numero de reglas violadas durante su periodo en prision \\
+$tserved_{i}$ & tiempo de servicio en prision (en meses) antes de su liberacion \\
+\noalign{\smallskip}\hline
+\end{tabular}
+\end{center}
+
+\end{itemize}	
+}
+
+
+\frame{\frametitle{Introducción}
+
+\begin{itemize}	
+
+\item \textcolor{red}{$d$}, es la variable censurada  
+
+% \begin{figure}[h]
+% \begin{center}
+% \includegraphics [height=5cm,width=8cm]{../Imagen/t2.png}
+% \end{center}
+% \end{figure}
+
+
+\fontsize{6}{8}\selectfont
+\begin{center}
+\begin{tabular}{ll}
+\hline\noalign{\smallskip}
+Variables & Descripci\'{o}n   \\
+\noalign{\smallskip}\hline\noalign{\smallskip}
+\textcolor{red}{$durat_{i}$} & \textcolor{red}{número de meses dada la libertad del exconvicto del sistema de prisión} \\
+\textcolor{red}{$d_{i}$} & \textcolor{red}{$==1$, si el exconvicto fue arrestrado, $=0$ otro caso}\\
+$age_{i}$ & edad del exconvicto en meses \\
+$married_{i}$ & $==1$ si el exconvicto se encuentra casado, $=0$, otro caso \\
+$black_{i}$ & $==1$, si el exconvicto es negro, $=0$ otro caso \\
+$drugs$ & $==1$, si el exconvicto tiene historial de drogas, $=0$ otro caso \\
+$alcohol_{i}$ & $==1$, si el exconvicto tiene historial de alcohol, $=0$ otro caso \\
+$priors_{i}$ & numero de condenas previas del exconvicto  \\
+$rules_{i}$ & numero de reglas violadas durante su periodo en prision \\
+$tserved_{i}$ & tiempo de servicio en prision (en meses) antes de su liberacion \\
+\noalign{\smallskip}\hline
+\end{tabular}
+\end{center}
+
+\end{itemize}	
+}
+
+
+\frame{\frametitle{Introducción}
+
+
+   \begin{itemize}
+\pause
+\input{../Tablas/T_1.tex}
+
+   \item El promedio de duración no condicional del periodo de libertad despues de estar encarcelado es de 55.4 meses
+
+   
+   \item Aproximadamente, 38 \% de la muestra ha sido arrestrado nuevamente (presumiblemente por cometer nuevamente un crimen) 
+   
+   \item La variable age (edad) es expresado en meses, entonces en promedio la persona sido liberada tiene 29 años
+   \end{itemize}
+   
+}	
+
+\frame{\frametitle{Introducción}
+
+\begin{columns}
+	\begin{column}{0.58\textwidth}
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics [height=2cm,width=6cm]{../Imagen/g1.png}
+\end{center}
+\end{figure}
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics [height=2cm,width=6cm]{../Imagen/g2.png}
+\end{center}
+\end{figure}
+
+	\end{column}
+	
+	
+    \begin{column}{0.38\textwidth}
+   \begin{itemize}
+%\pause
+   \item La mediana del tiempo de duración en la muestra es de 71 meses
+   
+   \item La mediana del tiempo de duración para el grupo de datos no censurados, aquellos que salen del estado ( los que son nuevamente puestos en prision) es de 19 meses
+   
+   \item Por tanto, se entiende que la mitad de aquellos casos que \tetxbf{fallan}, lo hicieron dentro de un año y medio luego de su liberación.
+   
+	\item Nota: El tiempo promedio de falla para el grupo no censurado es de 24 meses.
+   
+
+   \end{itemize}
+
+    \end{column}
+\end{columns}
+
+}
+	
+\frame{\frametitle{Introducción}
+
+\begin{itemize}	
+
+\item Todos estas seran covariables que se utilizarán en el modelo.
+
+\fontsize{6}{8}\selectfont
+\begin{center}
+\begin{tabular}{ll}
+\hline\noalign{\smallskip}
+Variables & Descripci\'{o}n   \\
+\noalign{\smallskip}\hline\noalign{\smallskip}
+$durat_{i}$ & número de meses dada la libertad del exconvicto del sistema de prisión \\
+$d_{i}$ & $==1$ , si el exconvicto fue arrestrado, $=0$ otro caso\\
+$age_{i}$ & edad del exconvicto en meses \\
+$married_{i}$ & $==1$ si el exconvicto se encuentra casado, $=0$, otro caso \\
+$black_{i}$ & $==1$, si el exconvicto es negro, $=0$ otro caso \\
+$drugs$ & $==1$, si el exconvicto tiene historial de drogas, $=0$ otro caso \\
+$alcohol_{i}$ & $==1$, si el exconvicto tiene historial de alcohol, $=0$ otro caso \\
+$priors_{i}$ & numero de condenas previas del exconvicto  \\
+$rules_{i}$ & numero de reglas violadas durante su periodo en prision \\
+$tserved_{i}$ & tiempo de servicio en prision (en meses) antes de su liberacion \\
+\noalign{\smallskip}\hline
+\end{tabular}
+\end{center}
+% \begin{figure}[h]
+% \begin{center}
+% \includegraphics [height=5cm,width=8cm]{../Imagen/t3.png}
+% \end{center}
+% \end{figure}
+
+\end{itemize}	
+
+}
+
+\frame{\frametitle{Introducción}
+
+% \begin{itemize}	
+
+% \item Programación en STATA
+
+% \begin{figure}[h]
+% \begin{center}
+% \includegraphics [height=5cm,width=8cm]{../Imagen/t4.png}
+% \end{center}
+% \end{figure}
+
+%\frame{\frametitle{}
+			Antes de estimar cualquier modelo de duración, primero tenemos que decirle a \texttt{Stata} que vamos a realizar un análisis de supervivencia. Para ello usamos el comando {\bf stset} (Survivel Time Set).
+				\begin{block}{\bf Syntax}
+					{\bf stset} {\texttt{timevar}}  {[\texttt{,failure(failvar)}]} 
+				\end{block}
+			donde {\texttt{timevar}} es la variable duración y {\texttt{failvar}} describe los eventos. Luego se sugiere utilizar el comando {\bf stsum} para resúmenes estadísticos de la data. \\
+
+			Seguido, es importante observar la función de supervivencia. Para ello, nos apoyamos con el comando {\bf sts} que gráfica el estimador de Kaplan-Meier:
+			\begin{block}{\bf Syntax}
+				{\bf sts} {\texttt{graph}}  {[\texttt{,by(varname)}]} 
+			\end{block}
+			donde {\texttt{varname}} es una variable categórica que indica una característica de las unidades de análisis (por ejemplo, tamaño empresarial para el análisis de supervivencia de empresas).
+}
+
+%\end{itemize}	
+
+}
+
+\section{Preguntas}
+\subsection{Pregunta 1}
+\frame{\frametitle{Pregunta 1}
+
+\begin{itemize}	
+
+\item Explique ¿Cuál es el tiempo de falla (\texttt{failure time}) para esta aplicación en particular?
+
+\end{itemize}	
+
+}
+
+
+\frame{\frametitle{Pregunta 1: solución}
+
+\begin{itemize}	
+%pause
+\item El tiempo de falla (\texttt{failure time}) en el presente caso esta dado por el tiempo de ser re-arrestrado (\texttt{ex-convicto}) despues de haber sido liberado del sistema de prision de USA.
+
+%\pause
+\item \small El tiempo es medido en meses
+
+%\pause
+\item \small En esta aplicación, existe un \textbf{riesgo unico}
+
+%\pause
+\item El \textbf{riesgo} en cuestion se entiende como el \textbf{riesgo} de reincidir en el delito, por tanto,  evidencia el estado de reencarcelación.
+
+\item El fenomeno es conocido en la literatura criminología como \textbf{recidivism (reincidencia)} 
+
+
+\end{itemize}	
+
+}
+
+
+\frame{\frametitle{Pregunta 1: solución}
+
+\begin{columns}
+	\begin{column}{0.48\textwidth}
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics [height=6cm,width=6cm]{../Imagen/g3.png}
+\end{center}
+\end{figure}
+
+
+
+	\end{column}
+	
+	
+    \begin{column}{0.58\textwidth}
+   \begin{itemize}
+   \pause
+
+\item Existen 552 observaciones que representa el \textbf{failures (fallar)}
+%\pause
+
+\item Por otro lado, 893 sobrevivientes
+%\pause
+
+\item Entonces, existen 552 observaciones no censuradas y 893 observaciones censuradas en este caso.
+%\pause
+
+\item Existen 80,013 \textbf{periodo de riesgo}
+
+
+   \end{itemize}
+
+    \end{column}
+\end{columns}
+
+}
+
+
+
+\frame{\frametitle{Pregunta 1: solución}
+
+\begin{itemize}	
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics [height=5cm,width=8cm]{../Imagen/g0.png}
+\end{center}
+\end{figure}
+
+\item Existen 552 observaciones que representa el \textbf{failures (fallar)}
+
+\item Por otro lado, 893 sobrevivientes
+
+\item Entonces, existen 552 observaciones no censuradas y 893 observaciones censuradas en este caso.
+
+\item Existen 80,013 \textbf{periodo de riesgo}
+
+\end{itemize}	
+
+}
+
+
+\subsection{Pregunta 2}
+\frame{\frametitle{Pregunta 2}
+
+\begin{itemize}	
+
+\item ¿Cuál es la tasa de riesgo bajo una metodología no paramétrica y sin covariables (\texttt{Kaplan-Meier}) para los cinco meses? interprete los valores estimados.
+
+\end{itemize}	
+
+}
+
+
+
+\frame{\frametitle{Pregunta 2: solución}
+
+\begin{itemize}	
+%\pause
+
+\item La tasa de Kaplan-Meier es definida como:
+
+$$
+\hat{\theta }(T_{k})=\frac{h_{k}}{n_{k}} 
+$$
+
+%\pause
+\item Donde $h_{k}$ es el numero de \textbf{falla} del estado en el tiempo $k$  
+
+%\pause
+\item Luego, $n_{k}$ es el \tetxbf{conjunto de riesgo} en el tiempo $k$ (\texttt{conjunto de personas que se mantiene en el analisis})
+
+%\pause
+\item El conjunto de riesgo comprende todas aquellas unidades en riesgo de \textbf{salir del estado (o fallar)} en el momento relevante.
+
+\end{itemize}	
+
+}
+
+
+\frame{\frametitle{Pregunta 2: solución}
+
+\begin{columns}
+	\begin{column}{0.48\textwidth}
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics [height=4cm,width=5cm]{../Imagen/g4.png}
+\end{center}
+\end{figure}
+
+
+	\end{column}
+	
+	
+    \begin{column}{0.58\textwidth}
+   \begin{itemize}
+%   \pause
+
+	\item Mes uno:
+	$$
+	\hat{\theta }(T_{1}) =8/1445=0.0055
+	$$
+
+%\pause
+
+	\item Mes dos:
+	$$
+	\hat{\theta }(T_{2}) =15/1437=0.0104
+	$$
+
+%\pause
+
+\item Recuerde $h_{k}$ es el número de salida y $n_{k}$ el el conjunto de riesgo (conjunto de riesgo)
+
+$$
+\hat{\theta }(T_{1}) =h_{k}/n_{k}
+$$
+
+
+   \end{itemize}
+
+    \end{column}
+\end{columns}
+
+}
+% \frame{\frametitle{Pregunta 2: solución}
+
+% \begin{itemize}	
+% 	\item Mes uno:
+% 	$$
+% 	\hat{\theta }(T_{1}) =8/1445=0.0055
+% 	$$
+
+% 	\item Mes dos:
+% 	$$
+% 	\hat{\theta }(T_{2}) =15/1437=0.0104
+% 	$$
+
+% \item Recuerde $h_{k}$ es el número de salida y $n_{k}$ el el conjunto de riesgo (conjunto de riesgo)
+
+% $$
+% \hat{\theta }(T_{1}) =h_{k}/n_{k}
+% $$
+
+% \end{itemize}	
+
+% }
+
+\frame{\frametitle{Pregunta 2: solución}
+
+\begin{itemize}	
+\item La tasa de riesgo (hazard) de \textbf{Kaplan-Meier} para los primeros 5 meses son:
+
+\begin{itemize}
+\item Mes uno:
+$$
+\hat{\theta }(T_{1}) =8/1445=0.0055
+$$
+
+\item Mes dos:
+$$
+\hat{\theta }(T_{2}) =15/1437=0.0104
+$$
+
+\item Mes tres:
+$$
+\hat{\theta }(T_{3}) =14/1422=0.0098
+$$
+
+\item Mes cuatro:
+$$
+\hat{\theta }(T_{4}) =13/1408=0.0092
+$$
+
+\item Mes cinco:
+$$
+\hat{\theta }(T_{5}) =16/1395=0.0115
+$$
+\end{itemize}	
+
+%\item \small Durante el primer mes de su liberación, un ex-convicto tiene \texttt{$0.55$}  por ciento de ser arrestrado nuevamente.
+
+\item \small Existe una probabilidad de $0.55$ por ciento para un preso, que luego de ser liberado sea nuevamente arrestrado por un delito dentro de un mes posterior a su liberación.
+%\item 
+
+\item \small Existe una probabilidad de $1.04$ por ciento para un preso liberado que sobrevivio al primer mes
+ (\texttt{que se mantienen sin realizar delitos al primer mes}), vuelva a ser arrestado nuevamente antes de terminar el segundo mes.
+
+\item \small Existe una probabilidad de $0.98$ por ciento para un preso liberado que sobrevivio al segundo mes
+ (\texttt{que se mantienen sin realizar delitos al segundo mes}), vuelva a ser arrestado nuevamente antes de terminar el tercer mes.
+
+%\item \small Existe $0.98$ por ciento de ex-convictos que se mantienen sin realizar delitos al segundo mes (\texttt{sobreviven}), podrian ser re-arrestrados nuevamente antes de terminar el tercer mes.
+
+%\item Existe $0.98$ cambios porcentuales donde los prisioneros quienes sobreviven al segundo mes, podrian ser arrestrados nuevamente antes de terminar el segundo mes.
+
+\end{itemize}	
+
+}
+
+%\subsection{Pregunta 3}
+\frame{\frametitle{Pregunta 2}
+
+\begin{itemize}	
+\item Grafique la tasa de riesgo (hazard rate) suavizada de \texttt{Kaplan-Meier} (ver STATA) ¿Qué es lo que usted concluye del grafico?
+\end{itemize}	
+
+}
+
+\frame{\frametitle{Pregunta 2: solución}
+
+\begin{itemize}	
+
+\item Tasa de riesgo (hazard rate) de \textbf{Kaplan - Meier} recincidencia 
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics [height=5cm,width=8cm]{../Imagen/t5.png}
+\end{center}
+\end{figure}
+
+
+\end{itemize}	
+
+}
+
+\subsection{Pregunta 3}
+\frame{\frametitle{Pregunta 3}
+
+\begin{itemize}	
+\item Realice la estimación dela función exponencial sobre la tasa de riesgo a través de la siguiente forma $\theta_{it}=exp(X^{'}_{i}\beta ) $, dado que $X$ es el conjunto de variables explicativas (definidas en la tabla lineas arriba). Interprete los coeficientes estimados para la \texttt{edad}(age) , \texttt{raza negros} (black), sentencias de condena previos (\texttt{priors}). Gráfique la linea base de hazard estimada para este modelo.
+\end{itemize}	
+
+}
+
+\frame{\frametitle{Pregunta 3: solución}
+
+\begin{itemize}	
+\item El modelo \textbf{exponencial de hazard} puede ser expresada como:
+
+$$
+\theta_{it}=exp( \beta_{0}+\beta_{1}age_{i}+\beta_{2}married_{i}+\beta_{3}black_{i} + \cdots 
+$$
+
+$$
+\cdots + \beta_{4} drugs_{i} +\beta_{5}alcohol_{i}+\beta_{6}priors_{i}+\beta_{7}rules_{i}+\beta_{8}tserved_{i} ) 
+$$
+
+\item Podriamos observar que ninguna de las variables explicativas \textbf{cambia respecto al tiempo}
+
+\item Todas las covariables exiben realizaciones para individuos previo a la fecha de su liberación para que no cambie mientras se acerca al tiempo de falla. 
+\end{itemize}	
+
+}
+
+\frame{\frametitle{Pregunta 3: solución}
+
+\begin{itemize}	
+\item El logaritmo del modelo \textbf{exponencial de hazard} puede ser expresada como:
+
+$$
+log_{e} (\theta_{it})= \beta_{0}+\beta_{1}\textcolor{blue}{age_{i}}+\beta_{2}\textcolor{red}{married_{i}}+\beta_{3}\textcolor{red}{black_{i}} + \cdots 
+$$
+
+$$
+\cdots + \beta_{4} \textcolor{red}{drugs_{i}} +\beta_{5}\textcolor{red}{alcohol_{i}}+\beta_{6}\textcolor{blue}{priors_{i}}+\beta_{7}\textcolor{blue}{rules_{i}}+\beta_{8}\textcolor{blue}{tserved_{i}} 
+$$
+
+\item \textcolor{red}{Para la  $k^{th}$ variable binaria }: 
+
+\begin{center}
+$(exp (\hat{\beta }_{k} )-1) $ x $100$
+\end{center}
+
+\item \textcolor{blue}{Para la  $k^{th}$ variable continua} : 
+
+$$ \frac{ \partial log( \hat{\beta }_{k} )}{\partial X_{k}} =\hat{\beta }_{k}  $$
+
+\end{itemize}	
+
+}
+
+
+\frame{\frametitle{Pregunta 3: solución}
+
+
+\begin{columns}
+	\begin{column}{0.48\textwidth}
+
+\pause
+\input{../Tablas/T_2.tex}
+
+	\end{column}
+	
+	
+    \begin{column}{0.48\textwidth}
+   \begin{itemize}
+   %\pause
+	\item \small En promedio y \texttt{ceteris paribus}, un incremento de un año más de edad del individuo reduce el riesgo (hazard) de cometer nuevamente un crimen ( reincidencia) por 4.1 \% (por ejemplo, $0.0034$ x $12 =0.0408$ dado los doce meses al año)
+	
+	%\pause
+	\item \small En promedio y \texttt{ceteris paribus}, el riesgo (hazard) de cometer nuevamente un crimen (reincidencia) para presos de raza negra (afroamericanos) es $\left[ exp(0.4578)-1\right]$ x 100= 58.1 \% mayor respecto a los presos de raza no oscura.
+	
+   \end{itemize}
+
+    \end{column}
+\end{columns}
+
+}
+
+
+\frame{\frametitle{Pregunta 3: solución}
+
+\begin{itemize}	
+%\pause
+\item Existe una \textbf{tasa de riesgo de duración constante (constante hazard duration )} sobre el riesgo del tiempo pasado en el estado (es decir, la libertad) es cero.
+
+%\pause
+\begin{figure}[h]
+\begin{center}
+\includegraphics [height=5cm,width=8cm]{../Imagen/t6.png}
+\end{center}
+\end{figure}
+
+\end{itemize}	
+
+}
+
+\subsection{Pregunta 4}
+\frame{\frametitle{Pregunta 4}
+
+\begin{itemize}	
+
+
+
+\item Estime la función de Hazard de Weibull de la siguiente forma:
+$$
+\theta_{it}=exp(X^{'}_{i}\beta )(\alpha t^{\alpha -1})
+$$	
+
+
+Nota: El estimado de $\alpha $ es denotado como $p$ en la regresión de STATA para este presente modelo
+\begin{enumerate}
+
+\item Comente los resultados obtenidos
+\item Use el nivel de significancia de 0.05 para testear la siguiente proposición:
+$$
+H_{o}: ln(\alpha )=0 
+$$
+
+$$
+H_{a}: ln(\alpha )<0 
+$$
+
+¿Qué proposición se encuetra sobre este test? Demuestre como la varianza muestral para este test-estadistico se deriva. Interprete el valro del tes.
+\end{enumerate}
+\end{itemize}	
+
+}
+
+\frame{\frametitle{Pregunta 4.1: solución}
+
+\begin{itemize}	
+\item El modelo de Hazard Weibull ser expresada como:
+
+$$
+\theta_{it}=exp( \beta_{0}+\beta_{1}age_{i}+\beta_{2}married_{i}+\beta_{3}black_{i} + \cdots 
+$$
+
+$$
+\cdots + \beta_{4} drugs_{i} +\beta_{5}alcohol_{i}+\beta_{6}priors_{i}+\beta_{7}rules_{i}+\beta_{8}tserved_{i} ) \underbrace{\left[ \alpha t^{\alpha -1} \right]}_{Hazard-linea-base}
+$$
+
+%\pause
+\begin{itemize}	
+\item Si $\alpha =1 \rightarrow $ dependencia constante de duración
+
+\item Si $\alpha <1 \rightarrow $ dependencia negativa de duración
+
+\item Si $\alpha >1 \rightarrow $ dependencia positiva de duración
+
+\end{itemize}	
+
+\end{itemize}	
+
+}
+
+\frame{\frametitle{Pregunta 4.1: solución}
+
+
+\begin{columns}
+	\begin{column}{0.48\textwidth}
+
+
+\input{../Tablas/T_3.tex}
+
+	\end{column}
+	
+	
+    \begin{column}{0.58\textwidth}
+   \begin{enumerate}
+	\item Los estimadores de covariables son similares sobre aquellos estimados en el modelo Exponencial de Hazard
+	
+	\item Como luce el gráfico de riesgo (hazard) dado este modelo?
+	
+	\item Recuerde que \textbf{p} aqui es el \textbf{$\alpha $} (valor de parametro de Weibull) 
+   \end{enumerate}
+
+    \end{column}
+\end{columns}
+
+}
+
+
+\frame{\frametitle{Pregunta 4.1: solución}
+
+\begin{itemize}	
+\item \small Dado $\hat{\alpha } < 1 $
+
+\item \small La linea base de riesgo (baseline hazard) decrese monotonicamente con respecto al tiempo
+
+\item \small El parametro estimado de $\hat{\alpha } $ (conocido como de shape parameter) sera estadisticamente diferente de la unidad?
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics [height=5cm,width=8cm]{../Imagen/t7.png}
+\end{center}
+\end{figure}
+
+\end{itemize}	
+
+}
+
+\frame{\frametitle{Pregunta 4.2: solución}
+
+\begin{itemize}	
+\item \small Usando el nivel de significancia de $0.05$ para testear  la siguiente proposición:
+
+$$
+H_{o}: ln(\alpha )=0
+$$
+
+$$
+H_{a}: ln(\alpha )<0
+$$
+
+\item \small ¿Cuál es la proposición bajo el test?
+
+\item \small Demuestre como la varianza muestral para este test estadistico es redivado en el presente caso
+
+\end{itemize}	
+
+}
+
+\frame{\frametitle{Pregunta 4.2: solución}
+
+\begin{itemize}	
+\item \small La hipotesis nula y alternativa son expresada:
+
+\begin{center}	
+$H_{o}: ln(\alpha )$ versus $H_{a}: ln(\alpha ) <0$
+\end{center}	
+
+\item \small Note que $H_{o}: ln(\alpha )=0$ es equivalente a $\alpha =1$
+
+\item \small La pregunta ahora es como derivar la varianza muestral en este caso?
+
+\item \small Respuesta : podemos usar el \tetxbf{metodo delta}
+\end{itemize}	
+
+}
+
+\frame{\frametitle{Pregunta 4.2: solución}
+
+\begin{itemize}	
+\item \small Si $\bigtriangleup = ln(\alpha )$ entonces:
+
+$$
+\frac{\partial \bigtriangleup }{\partial \alpha }=\frac{1}{\alpha }
+$$
+
+\item \small Esta expresión para estimar la varianza muestral  estará dado por:
+
+$$
+Var (\hat{\bigtriangleup } ) = \left( \frac{\partial \bigtriangleup }{\partial \alpha } \right)^{2} Var(\hat{\alpha } ) 
+$$
+
+$$
+Var (\hat{\bigtriangleup } ) = \left( \frac{1}{ \alpha } \right)^{2} Var(\hat{\alpha } ) 
+$$
+
+\item \small Insertamos los valores empiricos estimados y obtenemos:
+
+$$
+Var (\hat{\bigtriangleup } ) =\left( \frac{1}{ 0.8042664} \right)^{2} (0.000979564804) 
+$$
+
+$$
+Var (\hat{\bigtriangleup } ) =0.001514374616
+$$
+
+
+\end{itemize}	
+
+}
+
+\frame{\frametitle{Pregunta 4.2: solución}
+
+\begin{itemize}	
+\item El resultado del test-t asintotico para la proposición propuesta dado por:
+
+$$
+t = \frac{ln(0.8042664)}{ \sqrt{0.001514374616}}=-5.59745 
+$$
+
+\item El valor critico de una cola al 0.05 es de $\textbf{-1.64}$
+
+\item La hipotesis nula plantea \textbf{la duración es constante }, dado los resultados dicha hipotesisis es rechazada por la información
+
+\item Los resultados implican la existencia de una \textbf{dependencia duración negativa}
+
+\item Cuanto más tiempo esté en el estado de libertad, es menos probable que lo deje (es decir, reincidiendo).
+\end{itemize}	
+
+}
+
+\subsection{Pregunta 5}
+\frame{\frametitle{Pregunta 5}
+
+\begin{itemize}	
+\item Estime el modelo de propociones y compare los resultados con los previos modelos usando el modelo de Weibull en la pregunta anterior. ¿Cuál es la diferencia en los supuestos comprendidos en el \texttt{modelo Cox} y el modelo de \texttt{regresión de Weibull}?
+\end{itemize}	
+
+}
+
+
+\frame{\frametitle{Pregunta 5: solución}
+
+\begin{itemize}	
+\item ¿Cuál es la diferencia en los supuestos comprendidos en el modelo Cox y el modelo de regresión de Weibull?
+
+\item Dado la forma funcional del modelo de Cox
+
+$$
+\theta_{i}(X; t) =exp(\beta X_{i})\lambda_{0}(t)  
+$$
+
+\item Esto permite una flexibilización de la linea base de hazard (riesgo) para el modelo de Proporciones Cox (Cox PH)
+\end{itemize}	
+}
+
+
+\frame{\frametitle{Pregunta 5: solución}
+
+
+\begin{columns}
+	\begin{column}{0.48\textwidth}
+
+
+\input{../Tablas/T_4.tex}
+
+	\end{column}
+	
+	
+    \begin{column}{0.58\textwidth}
+   \begin{itemize}
+	\item Incorporación de la linea base de Hazard de manera más flexible (no-paramétrica) respecto al Weibull.
+	
+	\item Nota: termino no constante es timado por el modelo de Cox
+	
+	\item Los estimadores son ampliamente similares sobre aquellos obtenidos en el modelo Weibull
+	
+   \end{itemize}
+
+    \end{column}
+\end{columns}
+
+}
+
+\frame{\frametitle{Pregunta 5: solución}
+
+\input{../Tablas/T_5.tex}
+
+}
+
+\frame{\frametitle{Pregunta 5: solución}
+
+\begin{itemize}	
+\item \textbf{Investigar el supuesto de  proporciones de hazard }
+
+\item Nosotros ahora graficamos e investigamos explicitamente el test para el supuesto de proporciones de hazard en el el modelo de Cox.
+
+\begin{enumerate}	
+\item \small Verificamos el supuesto de \texttt{riesgos proporcionales} usando la gráfica de doble logarítmica de las probabilidades de supervivencia contra el logaritmo del tiempo de falla. La cual es conocido como \textbf{log-log plot}
+
+\item \small Especificamente, la cantidad $–log_{e} \left[–log_{e}\left(survivor-probability \right) \right] $ es graficada en relación al tiempo de falla.
+
+\end{enumerate}	
+
+\item \small Lo que buscamos en estos gráficos es evidencia de líneas paralelas, por lo que no hay cruces ni convergencia o divergencia de estas líneas para cada covariables.
+
+
+\end{itemize}	
+}
+
+\frame{\frametitle{Pregunta 5: solución}
+
+\begin{itemize}	
+
+\item Gráfico de  $–log_{e} \left[–log_{e}\left(survivor-probability \right) \right] $ en relación al $log_{e}(Tiempo-de-falla)$ para Negros y No-negros (Black y No-Black)
+\begin{figure}[h]
+\begin{center}
+\includegraphics [height=6cm,width=10cm]{../Imagen/t8.png}
+\end{center}
+\end{figure}
+
+\end{itemize}	
+}
+
+\frame{\frametitle{Pregunta 5: solución}
+
+\begin{itemize}	
+
+\item Podemos calcular un conjunto de residuos del modelo Cox PH.
+
+\item Los más populares son los \texttt{residuos de Schoenfeld.}
+
+\begin{enumerate}	
+\item \small Esto se calcula solo para aquellas observaciones que fallaron o salieron del estado (es decir, los 552 casos de falla aquí).
+
+\item \small En lugar de un solo residuo para cada individuo, tenemos residuos separados para cada individuo para cada covariable.
+\end{enumerate}	
+
+\item \small Estos residuos de Schoenfeld se pueden graficar en relación al tiempo de falla y sus valores deben ser independientes del tiempo para que se satisfaga el supuesto de riesgos proporcionales.
+
+\end{itemize}	
+}
+
+\frame{\frametitle{Pregunta 5: solución}
+
+\begin{itemize}	
+
+\item Gráfico de  the Schoenfeld Residuals en relación al tiempo por Black
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics [height=6cm,width=10cm]{../Imagen/t9.png}
+\end{center}
+\end{figure}
+
+\end{itemize}	
+}
+
+\frame{\frametitle{Pregunta 5: solución}
+
+\begin{itemize}	
+
+\item Una prueba estadística formal se basa en los residuos de Schoenfeld y es análoga a probar si el coeficiente de pendiente de una regresión de los residuos de Schoenfeld escalados en el tiempo es estadísticamente diferente de cero o no.
+
+\item La prueba se conoce como prueba de Grambsch y Therneau (1994) para riesgos proporcionales.
+
+\item La hipótesis nula para la prueba es:  \textbf{ el modelo de PH de Cox estimado satisface el supuesto de riesgos proporcionales.}
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics [height=2cm,width=6cm]{../Imagen/t10.png}
+\end{center}
+\end{figure}
+
+\item La prueba global (o general) para las ocho covariables no rechaza la hipótesis nula de la independencia de los residuos de Schoenfeld y el tiempo de falla con un valor prob de \textbf{0,1414.}
+
+\item Esto confirma que la suposición de una formulación de riesgos proporcionales está justificada por los datos de esta solicitud.
+
+\end{itemize}	
+}
+
+
+\end{document}
